@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Anomaly Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .output-container {
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .output-container p {
+            margin: 5px 0;
+        }
+        .anomaly {
+            color: red;
+        }
+        .normal {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Log Anomaly Detection</h1>
+
+    <div class="form-container">
+        <h2>Upload or Paste your log file</h2>
+        <form id="logForm" enctype="multipart/form-data">
+            <label for="logfile">Upload Log File (Optional):</label>
+            <input type="file" name="logfile" id="logfile">
+            
+            <label for="logcontent">Or Paste Log Content Below:</label>
+            <textarea id="logcontent" name="logcontent" placeholder="Paste your log content here..." rows="10"></textarea>
+            
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div id="outputContainer" class="output-container" style="display:none;">
+        <h3>Prediction Results:</h3>
+        <div id="predictions"></div>
+    </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('logForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let formData = new FormData();
+            let logFile = document.getElementById('logfile').files[0];
+            let logContent = document.getElementById('logcontent').value.trim();
+
+            if (logFile) {
+                formData.append('logfile', logFile);
+            } else if (logContent) {
+                formData.append('logcontent', logContent);
+            } else {
+                alert('Please either upload a file or paste log content.');
+                return;
+            }
+
+            // Make the POST request to the Flask server
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let predictions = data.predictions;
+                let outputContainer = document.getElementById('outputContainer');
+                let predictionsDiv = document.getElementById('predictions');
+                predictionsDiv.innerHTML = '';
+
+                // Loop through predictions and display them
+                predictions.forEach((prediction, index) => {
+                    let predictionElement = document.createElement('p');
+                    predictionElement.textContent = `Log Line ${index + 1}: ${prediction}`;
+                    predictionElement.classList.add(prediction.toLowerCase());
+                    predictionsDiv.appendChild(predictionElement);
+                });
+
+                // Show output container
+                outputContainer.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+
+</body>
+</html>
